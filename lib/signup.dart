@@ -33,11 +33,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Future<void> createUser(
       {required String name,
+      required String id,
       required String username,
       required String email,
       required String imageUrl}) async {
     try {
-      await collectionRef.add({
+      await collectionRef.doc(id).set({
         "name": name,
         "username": username,
         "email": email,
@@ -285,7 +286,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
             name: _name.text,
             username: _username.text,
             email: _email.text,
-            imageUrl: imageUrl!);
+            imageUrl: imageUrl!,
+            id: value.uid);
         Navigator.push(context,
             MaterialPageRoute(builder: (context) => const HomeScreen()));
       }

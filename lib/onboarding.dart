@@ -1,4 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:social_media_app/login.dart';
 
 class OnBoarding extends StatefulWidget {
@@ -20,10 +23,9 @@ class _OnBoardingState extends State<OnBoarding> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
-        
         children: [
           SizedBox(
-            height: 610,
+            height: 700,
             child: PageView.builder(
               controller: _pageController,
               onPageChanged: (int page) {
@@ -37,29 +39,45 @@ class _OnBoardingState extends State<OnBoarding> {
               },
             ),
           ),
-          Container(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List<Widget>.generate(
-                  _pages.length,
-                  (index) => const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: InkWell(
-                        child: CircleAvatar(
-                          radius: 8,
-                          backgroundColor: Colors.black,
-                        ),
-                      ))),
-            ),
+          SmoothPageIndicator(
+            controller: _pageController,
+            count: _pages.length,
+            effect: const ExpandingDotsEffect(
+                dotColor: Colors.grey,
+                activeDotColor: Colors.black87,
+                dotHeight: 8.0,
+                dotWidth: 16.0,
+                spacing: 10.0,
+                expansionFactor: 4,
+                strokeWidth: 2.0,
+                ),
+
           ),
-          ElevatedButton(onPressed: () {
-            if (_activePage == _pages.length - 1) {
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
-            } else {
-              _pageController.nextPage(
-                  duration: const Duration(milliseconds: 300), curve: Curves.easeIn);
-            }
-          }, child: const Text("Get started")),
+          Padding(
+            padding: const EdgeInsets.only(top: 20.0),
+            child: ElevatedButton(
+                onPressed: () {
+                  if (_activePage == _pages.length - 1) {
+                    Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const LoginScreen()));
+                  } else {
+                    _pageController.nextPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeIn);
+                  }
+                },
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.all(Colors.green),
+                  shape: MaterialStateProperty.all(const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(8)))),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.fromLTRB(70, 15, 70, 15),
+                  child: Text("Get started", style: TextStyle(fontSize: 20, color: Colors.white)),
+                )),
+          )
         ],
       ),
     );
@@ -71,13 +89,16 @@ class Page1 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
     return Container(
       child: Column(
         children: [
-          Image.asset("assets/images/onboarding.png"),
+          SizedBox(width: size.width,child: Image.asset("assets/images/onboarding.png", fit: BoxFit.fill,)),
           const Text("Let's connect with each other",
-              style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
-          const Text("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod", style: TextStyle(fontSize: 20)),
+              style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold,), textAlign: TextAlign.center,),
+          const Text(
+              "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod",
+              style: TextStyle(fontSize: 20), textAlign: TextAlign.center),
         ],
       ),
     );
@@ -89,13 +110,16 @@ class Page2 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+  final size = MediaQuery.of(context).size;
     return Container(
       child: Column(
         children: [
-          Image.asset("assets/images/onboarding.png"),
-           const Text("Let's connect with each other",
-              style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
-          const Text("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod", style: TextStyle(fontSize: 20)),
+          SizedBox(width: size.width,child: Image.asset("assets/images/onboarding.png", fit: BoxFit.fill,)),
+          const Text("Let's connect with each other",
+              style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+          const Text(
+              "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod",
+              style: TextStyle(fontSize: 20), textAlign: TextAlign.center),
         ],
       ),
     );
@@ -107,13 +131,16 @@ class Page3 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+  final size = MediaQuery.of(context).size;
     return Container(
       child: Column(
         children: [
-          Image.asset("assets/images/onboarding.png"),
-           const Text("Let's connect with each other",
-              style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
-          const Text("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod", style: TextStyle(fontSize: 20)),
+          SizedBox(width: size.width,child: Image.asset("assets/images/onboarding.png", fit: BoxFit.fill,)),
+          const Text("Let's connect with each other",
+              style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+          const Text(
+              "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod",
+              style: TextStyle(fontSize: 20), textAlign: TextAlign.center),
         ],
       ),
     );
