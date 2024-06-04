@@ -1,8 +1,12 @@
 import 'dart:developer';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:social_media_app/authservice.dart';
+import 'package:social_media_app/commentlist.dart';
 import 'package:social_media_app/firestoreservice.dart';
 import 'package:social_media_app/locator.dart';
 import 'package:shimmer/shimmer.dart';
@@ -15,13 +19,15 @@ class PostCard extends StatefulWidget {
       required this.image,
       required this.user_id,
       required this.postId,
-      required this.likes_Count});
+      required this.likes_Count,
+      required this.comment_Count});
   final String title;
   final String description;
   final String image;
   final String user_id;
   final String postId;
   final int likes_Count;
+  final int comment_Count;
 
   @override
   State<PostCard> createState() => _PostCardState();
@@ -31,14 +37,23 @@ class _PostCardState extends State<PostCard> {
   bool _isFollowing = false;
   bool _isFavorite = false;
   int _favoriteCount = 0;
+  int commentCount = 0;
 
-  getLikeCount() {
+  getLikeCount() async {
+  final List likedUsers = await locator<FirestoreService>().getLikedUsers(widget.postId);
+
+  likedUsers.map((e) => e['email']).contains(FirebaseAuth.instance.currentUser!.email) ? _isFavorite = true : _isFavorite = false;
+
+  log((await locator<FirestoreService>().getLikedUsers(widget.postId)).toString());
+      
     setState(() {
       _favoriteCount = widget.likes_Count;
+      commentCount = widget.comment_Count;
     });
   }
 
   List<Map<String, dynamic>> follows = [];
+
   @override
   void initState() {
     super.initState();
@@ -125,7 +140,6 @@ class _PostCardState extends State<PostCard> {
                     _isFollowing = false;
                   });
                 }
-                // follows = await locator<FirestoreService>().followUser(widget.user_id);
               },
               child: Container(
                 padding: const EdgeInsets.all(10),
@@ -178,21 +192,22 @@ class _PostCardState extends State<PostCard> {
               const Expanded(child: SizedBox()),
               IconButton(
                 onPressed: () async {
-                  if (!_isFavorite) {
-                    await locator<FirestoreService>().likePosts(widget.postId);
-
-                    setState(() {
-                      _favoriteCount++;
-                      _isFavorite = true;
-                    });
-                  } else {
-                    await locator<FirestoreService>()
-                        .dislikePosts(widget.postId);
-                    setState(() {
-                      _favoriteCount--;
-                      _isFavorite = false;
-                    });
-                  }
+            
+                    if (!_isFavorite) {
+                      await locator<FirestoreService>()
+                          .likePosts(widget.postId);
+                      setState(() {
+                        _favoriteCount++;
+                        _isFavorite = true;
+                      });
+                    } else {
+                      await locator<FirestoreService>()
+                          .dislikePosts(widget.postId);
+                      setState(() {
+                        _favoriteCount--;
+                        _isFavorite = false;
+                      });
+                    }
                 },
                 icon: _isFavorite
                     ? const Icon(Icons.favorite, color: Colors.red)
@@ -201,50 +216,50 @@ class _PostCardState extends State<PostCard> {
               InkWell(
                 onTap: () {
                   showModalBottomSheet(
-                    
-                    context: context,
-                    builder: (BuildContext context) {
-                      return Container(
-                        color: Colors.white,
-                        child: Column(
-                          children: [
-                            FutureBuilder(
-                              future: locator<FirestoreService>().getLikedUsers(widget.postId),
-                              builder: (context, AsyncSnapshot snapshot){
-                                log(snapshot.data.toString());
-                                if (snapshot.hasData) {
-                                  return ListView(
-                                    shrinkWrap: true,
-                                    children: snapshot.data.map<Widget>((e) => ListTile(
-                                      
-                                      leading: CircleAvatar(
-                                        backgroundImage: NetworkImage(e['image']),
+                      context: context,
+                      builder: (BuildContext context) {
+                        return Container(
+                          color: Colors.white,
+                          child: Column(
+                            children: [
+                              FutureBuilder(
+                                future: locator<FirestoreService>()
+                                    .getLikedUsers(widget.postId),
+                                builder: (context, AsyncSnapshot snapshot) {
+                                  log(snapshot.data.toString());
+                                  if (snapshot.hasData) {
+                                    return ListView(
+                                        shrinkWrap: true,
+                                        children: snapshot.data
+                                            .map<Widget>((e) => ListTile(
+                                                  leading: CircleAvatar(
+                                                    backgroundImage:
+                                                        NetworkImage(
+                                                            e['image']),
+                                                  ),
+                                                  title: Text(e['username']),
+                                                ))
+                                            .toList());
+                                  } else {
+                                    return SizedBox(
+                                      width: 50,
+                                      height: 50,
+                                      child: Shimmer.fromColors(
+                                        baseColor: Colors.grey[300]!,
+                                        highlightColor: Colors.grey[100]!,
+                                        child: Container(
+                                          color: Colors.white,
+                                        ),
                                       ),
-                                      title: Text(e['username']),
-                                    )).toList(
-                                  ));
-                                } else {
-                                  return SizedBox(
-                                    width: 50,
-                                    height: 50,
-                                    child: Shimmer.fromColors(
-                                      baseColor: Colors.grey[300]!,
-                                      highlightColor: Colors.grey[100]!,
-                                      child: Container(
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
-                            ),
-
-                          ],
-                        ),
-                        
-                      );
-                    });
-                }, 
+                                    );
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      });
+                },
                 child: Text(_favoriteCount.toString(),
                     style: const TextStyle(fontSize: 16, color: Colors.black)),
               ),
@@ -252,11 +267,30 @@ class _PostCardState extends State<PostCard> {
                 width: 10,
               ),
               IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.comment),
-              ),
-              const Text("12",
-                  style: TextStyle(fontSize: 16, color: Colors.black)),
+                  icon: Row(
+                    children: [
+                      const Icon(Icons.comment),
+                      const SizedBox(
+                        width: 5,
+                      ),
+                      Text(commentCount.toString(),
+                          style: const TextStyle(
+                              fontSize: 16, color: Colors.black)),
+                    ],
+                  ),
+                  onPressed: () {
+                    showModalBottomSheet(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return CommentList(
+                              onCommentAdd: () {
+                                setState(() {
+                                  commentCount++;
+                                });
+                              },
+                              postId: widget.postId);
+                        });
+                  }),
             ],
           )
         ],

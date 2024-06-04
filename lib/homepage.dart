@@ -103,7 +103,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     title: post['title'],
                     image: post['image'],
                     user_id: post['created_by'],
-                    likes_Count: post['likes_count'],
+                    likes_Count: post['likes_count'], 
+                    comment_Count: post['comment_count']??0,
                   );
                 },
               )));

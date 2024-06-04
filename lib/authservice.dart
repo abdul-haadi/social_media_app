@@ -44,33 +44,4 @@ class AuthService {
       print(e);
     }
   }
-
-  getPosts() async {
-    final snapshot = await FirebaseFirestore.instance.collection('posts').get();
-    final data = snapshot.docs.map((e) => e.data()).toList();
-    return data;
-  }
-
-  getUser(String uid) async {
-    final snapshot = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-    return snapshot.data();
-  }
-
-  
-  //  followUser(String uid) async {
-  //   final user = _auth.currentUser;
-  //   final following = FirebaseFirestore.instance.collection('users').doc(user!.uid).collection('following');
-  //   final followers = FirebaseFirestore.instance.collection('users').doc(uid).collection('followers');
-  //   final followingData = await following.doc(uid).get();
-  //   final followersData = await followers.doc(user.uid).get();
-  //   if(followingData.exists && followersData.exists) {
-  //     await following.doc(uid).delete();
-  //     await followers.doc(user.uid).delete();
-  //     return false;
-  //   } else {
-  //     await following.doc(uid).set({});
-  //     await followers.doc(user.uid).set({});
-  //     return true;
-  //   }
-  //  }
 }
