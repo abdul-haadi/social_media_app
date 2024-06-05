@@ -10,6 +10,7 @@ import 'package:social_media_app/commentlist.dart';
 import 'package:social_media_app/firestoreservice.dart';
 import 'package:social_media_app/locator.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:social_media_app/profile.dart';
 
 class PostCard extends StatefulWidget {
   const PostCard(
@@ -86,9 +87,19 @@ class _PostCardState extends State<PostCard> {
               future: locator<FirestoreService>().getUser(widget.user_id),
               builder: (context, AsyncSnapshot snapshot) {
                 if (snapshot.hasData) {
-                  return CircleAvatar(
-                    backgroundImage: NetworkImage(snapshot.data!['image']),
-                    radius: 25,
+                  return InkWell(
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => ProfilePage(
+                                    userId: widget.user_id,
+                                  )));
+                    },
+                    child: CircleAvatar(
+                      backgroundImage: NetworkImage(snapshot.data!['image']),
+                      radius: 25,
+                    ),
                   );
                 } else {
                   return SizedBox(
@@ -313,7 +324,6 @@ class _PostCardState extends State<PostCard> {
                                 setState(() {
                                   commentCount++;
                                   widget.getData();
-
                                 });
                               },
                               onCommentDelete: () {

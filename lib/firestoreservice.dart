@@ -10,6 +10,16 @@ class FirestoreService {
     return data;
   }
 
+  getUserPosts(userId) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('posts')
+        .where('created_by', isEqualTo: userId)
+        .get();
+    final data = snapshot.docs.map((e) => {...e.data(), "id": e.id}).toList();
+    log(userId);
+    return data;
+  }
+
   getUser(String uid) async {
     final snapshot =
         await FirebaseFirestore.instance.collection('users').doc(uid).get();

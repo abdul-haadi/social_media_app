@@ -12,6 +12,10 @@ class AuthService {
   //   }
   // }
 
+  CurrentUser() {
+    return _auth.currentUser;
+  }
+
   Future<User?> createUserWithEmailAndPassword(
       String email, String password) async {
     try {

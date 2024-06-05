@@ -9,6 +9,7 @@ import 'package:social_media_app/firestoreservice.dart';
 import 'package:social_media_app/locator.dart';
 import 'package:social_media_app/login.dart';
 import 'package:social_media_app/postcard.dart';
+import 'package:social_media_app/profile.dart';
 
 class HomeScreen extends StatefulWidget {
    const HomeScreen({super.key});
@@ -34,6 +35,13 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     log(posts.toString());
   }
+ var userId;
+
+  getUserId() async {
+    final user = await locator<AuthService>().CurrentUser();
+    userId = user.uid;
+    print(userId);
+  }
 
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
         toolbarHeight: 100,
         leading: IconButton(
           onPressed: () {
-            const CreatePost();
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const CreatePost()));
           },
           icon: const Icon(Icons.photo_camera_outlined, size: 30,),
         ),
@@ -58,11 +66,17 @@ class _HomeScreenState extends State<HomeScreen> {
         ),),
         actions: <Widget>[
           Padding(
-            padding: const EdgeInsets.only(right: 20.0),
+            padding: const EdgeInsets.only(right: 10.0),
             child: IconButton(onPressed:() {
               
             },icon: const Icon(Icons.search, size: 30,), color: Colors.black,),
+            
           ),
+          IconButton(onPressed: (){
+            getUserId();
+            Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(userId:userId)));
+
+          }, icon: const Icon(Icons.person), color: Colors.black, iconSize: 30,)
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -80,6 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
             label: "Logout",
             
           ),
+          
         ],
         onTap: (index) {
           if (index == 1) {
