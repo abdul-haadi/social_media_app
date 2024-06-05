@@ -36,7 +36,7 @@ class _CreatePostState extends State<CreatePost> {
         'timestamp': FieldValue.serverTimestamp(),
         'created_by': FirebaseAuth.instance.currentUser!.uid,
         'likes_count': 0,
-        'comments_count': 0,
+        'comment_count': 0,
       });
     } catch (e) {
       print(e);

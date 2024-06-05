@@ -20,7 +20,7 @@ class PostCard extends StatefulWidget {
       required this.user_id,
       required this.postId,
       required this.likes_Count,
-      required this.comment_Count});
+      required this.comment_Count, required this.getData});
   final String title;
   final String description;
   final String image;
@@ -28,6 +28,7 @@ class PostCard extends StatefulWidget {
   final String postId;
   final int likes_Count;
   final int comment_Count;
+  final Function() getData;
 
   @override
   State<PostCard> createState() => _PostCardState();
@@ -39,15 +40,28 @@ class _PostCardState extends State<PostCard> {
   int _favoriteCount = 0;
   int commentCount = 0;
 
+
   getLikeCount() async {
-  final List likedUsers = await locator<FirestoreService>().getLikedUsers(widget.postId);
-
-  likedUsers.map((e) => e['email']).contains(FirebaseAuth.instance.currentUser!.email) ? _isFavorite = true : _isFavorite = false;
-
-  log((await locator<FirestoreService>().getLikedUsers(widget.postId)).toString());
-      
     setState(() {
       _favoriteCount = widget.likes_Count;
+    });
+  
+  
+  await locator<FirestoreService>().checkIfLiked(widget.postId).then((value) => _isFavorite = value);
+  // final List likedUsers = await locator<FirestoreService>().getLikedUsers(widget.postId);
+
+  // likedUsers.map((e) => e['email']).contains(FirebaseAuth.instance.currentUser!.email) ? _isFavorite = true : _isFavorite = false;
+
+  // log((await locator<FirestoreService>().getLikedUsers(widget.postId)).toString());
+  setState(() {
+    _favoriteCount = widget.likes_Count;
+
+  });
+      
+  }
+
+  getCommentCount(){
+    setState(() {
       commentCount = widget.comment_Count;
     });
   }
@@ -58,6 +72,7 @@ class _PostCardState extends State<PostCard> {
   void initState() {
     super.initState();
     getLikeCount();
+    getCommentCount();
   }
 
   Widget build(BuildContext context) {
@@ -190,6 +205,9 @@ class _PostCardState extends State<PostCard> {
               const Text("36",
                   style: TextStyle(fontSize: 16, color: Colors.black)),
               const Expanded(child: SizedBox()),
+
+
+
               IconButton(
                 onPressed: () async {
             
@@ -199,6 +217,7 @@ class _PostCardState extends State<PostCard> {
                       setState(() {
                         _favoriteCount++;
                         _isFavorite = true;
+                        widget.getData();
                       });
                     } else {
                       await locator<FirestoreService>()
@@ -206,6 +225,7 @@ class _PostCardState extends State<PostCard> {
                       setState(() {
                         _favoriteCount--;
                         _isFavorite = false;
+                        widget.getData();
                       });
                     }
                 },
@@ -263,6 +283,12 @@ class _PostCardState extends State<PostCard> {
                 child: Text(_favoriteCount.toString(),
                     style: const TextStyle(fontSize: 16, color: Colors.black)),
               ),
+
+
+
+
+
+
               const SizedBox(
                 width: 10,
               ),
@@ -286,11 +312,24 @@ class _PostCardState extends State<PostCard> {
                               onCommentAdd: () {
                                 setState(() {
                                   commentCount++;
+                                  widget.getData();
+
+                                });
+                              },
+                              onCommentDelete: () {
+                                setState(() {
+                                  commentCount--;
+                                  widget.getData();
                                 });
                               },
                               postId: widget.postId);
                         });
                   }),
+
+
+
+
+                  
             ],
           )
         ],

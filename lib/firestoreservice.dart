@@ -45,6 +45,18 @@ class FirestoreService {
     await postRef.doc(postId).collection('likes').doc(userId).delete();
   }
 
+  checkIfLiked(postId) async {
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('posts')
+        .doc(postId)
+        .collection('likes')
+        .doc(userId)
+        .get();
+    return snapshot.exists;
+  }
+
   getLikedUsers(postId) async {
     if (postId == null) {
       throw ArgumentError('postId cannot be null');
@@ -89,16 +101,31 @@ class FirestoreService {
         .collection('comments')
         .get();
     final data = await snapshot
-        .then((value) => value.docs.map((e) => e.data()).toList());
+        .then((value) => value.docs.map((e) => {...e.data(), 'id': e.id}).toList());
     print("this is data" + data.toString());
 
     final List<Map<String, dynamic>> userdata = [];
 
     for (var i = 0; i < data.length; i++) {
       final user = await getUser(data[i]['user_id'].toString());
-      userdata.add({...user, 'comment': data[i]['comment']});
+      userdata.add({...user, ...data[i]});
     }
       print(userdata);
     return userdata;
+  }
+
+  deleteComment(String postId, String commentId) async {
+    CollectionReference postRef =
+        FirebaseFirestore.instance.collection('posts');
+
+    await postRef.doc(postId).update({
+      "comment_count": FieldValue.increment(-1),
+    });
+   await postRef
+        .doc(postId)
+        .collection('comments').doc(commentId)
+        .delete();
+        
+        print("Deleted Comment");
   }
 }

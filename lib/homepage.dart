@@ -98,6 +98,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 itemBuilder: (context, index) {
                   final post = posts[index];
                   return PostCard(
+                    getData: (){
+                      getPost();
+                    },
+                    
                     postId: post['id'],
                     description: post['description'],
                     title: post['title'],

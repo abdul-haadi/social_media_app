@@ -1,12 +1,14 @@
 import 'dart:developer';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:social_media_app/firestoreservice.dart';
 import 'package:social_media_app/locator.dart';
 
 class CommentList extends StatefulWidget {
-  CommentList({super.key, required this.postId,required this.onCommentAdd});
+  CommentList({super.key, required this.postId,required this.onCommentAdd, required this.onCommentDelete});
   final String postId;
   final Function onCommentAdd;
+  final Function onCommentDelete;
 
   @override
   State<CommentList> createState() => _CommentListState();
@@ -20,7 +22,9 @@ class _CommentListState extends State<CommentList> {
 
   _getComment() async {
     comments = await locator<FirestoreService>().getComments(widget.postId);
-    setState(() {});
+    setState(() {
+      
+    });
     print(comments.toString());
   }
 
@@ -69,6 +73,16 @@ class _CommentListState extends State<CommentList> {
                   ),
                   title: Text(com['username']),
                   subtitle: Text(com['comment']),
+                  trailing: IconButton(
+                    onPressed: () async {
+                      widget.onCommentDelete();
+                      print("This is comment Id" + com.toString());
+                      await locator<FirestoreService>().deleteComment(
+                          widget.postId, com['id'].toString());
+                      _getComment();
+                    },
+                    icon: const Icon(Icons.delete),
+                  )
                 );
               },
             ),
