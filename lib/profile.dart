@@ -15,18 +15,60 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  bool _isFollowing = false;
+  int following_count = 0;
+  int followers_count = 0;
+  var currentUserId;
+  int post_count = 0;
 
+  getPostCount() async {
+    post_count =
+        await locator<FirestoreService>().getUserPostsCount(widget.userId);
+    setState(() {});
+  }
+
+  Map<String, dynamic> profileData = {};
+  List<Map<String, dynamic>> userPosts = [];
+
+  Future<void> getProfileData() async {
+    profileData = await locator<FirestoreService>().getUser(widget.userId);
+    setState(() {});
+    log(profileData.toString());
+    await locator<FirestoreService>()
+        .checkIfFollowing(widget.userId)
+        .then((value) {
+      setState(() {
+        _isFollowing = value;
+      });
+    });
+  }
+
+  Future<void> getUserPosts() async {
+    userPosts = await locator<FirestoreService>().getUserPosts(widget.userId);
+    setState(() {});
+    log("Post data " + userPosts.toString());
+  }
 
   @override
+  void initState() {
+    super.initState();
+    getProfileData();
+    getUserPosts();
+    getUserId();
+    getPostCount();
+  }
 
-  // getUserId() async {
-  //   final user = await locator<AuthService>().CurrentUser();
-  //   userId = user.uid;
-  //   print(userId);
-  // }
+  getUserId() async {
+    final user = await locator<AuthService>().CurrentUser();
+    setState(() {
+      currentUserId = user.uid;
+    });
+    print(currentUserId);
+  }
 
   @override
   Widget build(BuildContext context) {
+    print(currentUserId);
     return Scaffold(
       appBar: AppBar(
         leadingWidth: 100,
@@ -70,252 +112,299 @@ class _ProfilePageState extends State<ProfilePage> {
         ],
       ),
       body: Center(
-          child: FutureBuilder(
-        future: locator<FirestoreService>().getUser(widget.userId),
-        builder: (context, AsyncSnapshot snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const CircularProgressIndicator();
-          }
-          return Column(
-            children: [
-              const Divider(
-                color: Colors.grey,
-                thickness: 0.5,
-              ),
-               Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundImage: NetworkImage(snapshot.data!['image']),
-                ),
-              ),
-               Text(
-                snapshot.data!['name'],
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-               Text(
-                snapshot.data!['username'],
-                style: const TextStyle(fontSize: 15, color: Colors.grey),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(30.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircleAvatar(
-                      radius: 25,
-                      backgroundColor: const Color(0xFFBEBEBE),
-                      child: Container(
-                          decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xFFF6F6F6),
-                          width: 10,
+          child: Container(
+        child: profileData.isEmpty
+            ? const CircularProgressIndicator()
+            : ListView.builder(
+                itemCount: 1,
+                itemBuilder: (context, index) {
+                  return Column(
+                    children: [
+                      const Divider(
+                        color: Colors.grey,
+                        thickness: 0.5,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundImage: NetworkImage(profileData['image']),
                         ),
-                      )),
-                    ),
-                    const SizedBox(
-                      width: 14,
-                    ),
-                    CircleAvatar(
-                      radius: 25,
-                      backgroundColor: const Color(0xFFBEBEBE),
-                      child: Container(
-                          decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xFFF6F6F6),
-                          width: 10,
-                        ),
-                      )),
-                    ),
-                    const SizedBox(
-                      width: 14,
-                    ),
-                    CircleAvatar(
-                      radius: 25,
-                      backgroundColor: const Color(0xFFBEBEBE),
-                      child: Container(
-                          decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xFFF6F6F6),
-                          width: 10,
-                        ),
-                      )),
-                    ),
-                    const SizedBox(
-                      width: 14,
-                    ),
-                    CircleAvatar(
-                      radius: 25,
-                      backgroundColor: const Color(0xFFBEBEBE),
-                      child: Container(
-                          decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xFFF6F6F6),
-                          width: 10,
-                        ),
-                      )),
-                    ),
-                  ],
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.message_outlined),
-                      label: const Text("Message"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFFFFF),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      )),
-                  const SizedBox(
-                    width: 10,
-                  ),
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20))),
-                    child: const Text(
-                      "Follow",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  )
-                ],
-              ),
-              const SizedBox(
-                height: 30,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 90,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey, width: 0.5),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "6.3k",
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          "Followers",
-                          style: TextStyle(fontSize: 15, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(
-                    width: 20,
-                  ),
-                  Container(
-                    width: 90,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey, width: 0.5),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "572",
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          "Posts",
-                          style: TextStyle(fontSize: 15, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(
-                    width: 20,
-                  ),
-                  Container(
-                    width: 90,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey, width: 0.5),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "2.5k",
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          "Following",
-                          style: TextStyle(fontSize: 15, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const Padding(
-                padding: EdgeInsets.only(top: 10.0),
-                child: Divider(
-                  color: Colors.grey,
-                  thickness: 0.5,
-                ),
-              ),
-              FutureBuilder(
-                future: locator<FirestoreService>().getUserPosts(widget.userId),
-                builder: (context, AsyncSnapshot snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator();
-                  }
-                  return SizedBox(
-                    height: 180,
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      scrollDirection: Axis.horizontal,
-                      itemCount: snapshot.data.length,
-                      itemBuilder: (context, index) {
-                        return Column(
-                          
+                      ),
+                      Text(
+                        profileData['name'],
+                        style: const TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        profileData['username'],
+                        style:
+                            const TextStyle(fontSize: 15, color: Colors.grey),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(30.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            SizedBox(
-                              height: 180,
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Image.network(snapshot.data[index]['image']),
+                            CircleAvatar(
+                              radius: 25,
+                              backgroundColor: const Color(0xFFBEBEBE),
+                              child: Container(
+                                  decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFFF6F6F6),
+                                  width: 10,
+                                ),
                               )),
-                           ],
-                           
-                        );
-                      },
-                    ),
+                            ),
+                            const SizedBox(
+                              width: 14,
+                            ),
+                            CircleAvatar(
+                              radius: 25,
+                              backgroundColor: const Color(0xFFBEBEBE),
+                              child: Container(
+                                  decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFFF6F6F6),
+                                  width: 10,
+                                ),
+                              )),
+                            ),
+                            const SizedBox(
+                              width: 14,
+                            ),
+                            CircleAvatar(
+                              radius: 25,
+                              backgroundColor: const Color(0xFFBEBEBE),
+                              child: Container(
+                                  decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFFF6F6F6),
+                                  width: 10,
+                                ),
+                              )),
+                            ),
+                            const SizedBox(
+                              width: 14,
+                            ),
+                            CircleAvatar(
+                              radius: 25,
+                              backgroundColor: const Color(0xFFBEBEBE),
+                              child: Container(
+                                  decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFFF6F6F6),
+                                  width: 10,
+                                ),
+                              )),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ElevatedButton.icon(
+                              onPressed: () {},
+                              icon: const Icon(Icons.message_outlined),
+                              label: const Text("Message"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFFFFFF),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              )),
+                          const SizedBox(
+                            width: 10,
+                          ),
+                          currentUserId == widget.userId
+                              ? const Text("")
+                              : ElevatedButton(
+                                  onPressed: () {
+                                    if (!_isFollowing) {
+                                      setState(() {
+                                        _isFollowing = true;
+                                        followers_count++;
+                                        profileData['followers_count'] =
+                                            followers_count;
+                                        profileData['following_count'] =
+                                            following_count;
+                                      });
+                                      locator<FirestoreService>()
+                                          .followUser(widget.userId);
+                                          
+                                    } else {
+                                      setState(() {
+                                        _isFollowing = false;
+                                        followers_count--;
+                                        profileData['followers_count'] =
+                                            followers_count;
+                                        profileData['following_count'] =
+                                            following_count;
+                                      });
+                                      locator<FirestoreService>()
+                                          .unFollowUser(widget.userId);
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: _isFollowing
+                                          ? Colors.white
+                                          : Colors.green,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(20))),
+                                  child: Text(
+                                    _isFollowing ? "Following" : "Follow",
+                                    style: _isFollowing
+                                        ? const TextStyle(color: Colors.black)
+                                        : const TextStyle(color: Colors.white),
+                                  ),
+                                )
+                        ],
+                      ),
+                      const SizedBox(
+                        height: 30,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 90,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              border:
+                                  Border.all(color: Colors.grey, width: 0.5),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _isFollowing
+                                    ? Text(
+                                        profileData['followers_count']
+                                            .toString(),
+                                        style: const TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold),
+                                      )
+                                    : Text(
+                                        profileData['followers_count']
+                                            .toString(),
+                                        style: const TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                const Text(
+                                  "Followers",
+                                  style: TextStyle(
+                                      fontSize: 15, color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 20,
+                          ),
+                          Container(
+                            width: 90,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              border:
+                                  Border.all(color: Colors.grey, width: 0.5),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  post_count.toString(),
+                                  style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                const Text(
+                                  "Posts",
+                                  style: TextStyle(
+                                      fontSize: 15, color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 20,
+                          ),
+                          Container(
+                            width: 90,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              border:
+                                  Border.all(color: Colors.grey, width: 0.5),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  profileData['following_count'].toString() ??
+                                      '0',
+                                  style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                const Text(
+                                  "Following",
+                                  style: TextStyle(
+                                      fontSize: 15, color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.only(top: 10.0),
+                        child: Divider(
+                          color: Colors.grey,
+                          thickness: 0.5,
+                        ),
+                      ),
+                      SizedBox(
+                        height: 180,
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          scrollDirection: Axis.horizontal,
+                          itemCount: userPosts.length,
+                          itemBuilder: (context, index) {
+                            final post = userPosts[index];
+                            return Column(
+                              children: [
+                                SizedBox(
+                                    height: 180,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Image.network(
+                                        post['image'],
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   );
                 },
-              )
-            ],
-          );
-        },
-      )
-      ),
+              ),
+      )),
     );
   }
 }

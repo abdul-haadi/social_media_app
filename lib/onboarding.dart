@@ -57,17 +57,8 @@ class _OnBoardingState extends State<OnBoarding> {
             padding: const EdgeInsets.only(top: 20.0),
             child: ElevatedButton(
                 onPressed: () {
-                  if (_activePage == _pages.length - 1) {
-                    Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const LoginScreen()));
-                  } else {
-                    _pageController.nextPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeIn);
-                  }
-                },
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginScreen()));
+                  },
                 style: ButtonStyle(
                   backgroundColor: MaterialStateProperty.all(Colors.green),
                   shape: MaterialStateProperty.all(const RoundedRectangleBorder(

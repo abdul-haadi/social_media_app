@@ -29,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
     getPost();
   }
   getPost() async{
+    log("Getting posts");
     posts = await locator<FirestoreService>().getPosts();
     setState(() {
 
@@ -51,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
         toolbarHeight: 100,
         leading: IconButton(
           onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const CreatePost()));
+            Navigator.push(context, MaterialPageRoute(builder: (context) => CreatePost(getPost: getPost)));
           },
           icon: const Icon(Icons.photo_camera_outlined, size: 30,),
         ),
@@ -97,18 +98,60 @@ class _HomeScreenState extends State<HomeScreen> {
           
         ],
         onTap: (index) {
+          if(index == 0){
+            showDialog(
+
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text("Home"),
+                  content: const Text("You are already on the home page"),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text("OK"),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
           if (index == 1) {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const CreatePost()));
+            Navigator.push(context, MaterialPageRoute(builder: (context) =>  CreatePost(getPost: getPost,)));
           }
           if (index == 2) {
-            _signOut(context);
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text("Logout"),
+                  content: const Text("Are you sure you want to logout?"),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text("No"),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        _signOut(context);
+                      },
+                      child: const Text("Yes"),
+                    ),
+                  ],
+                );
+              },
+            );
           }
         },
         
       ),
       body: Center(
         child: ListView.builder(
-          cacheExtent: 500,
+cacheExtent: 2000,          
                 itemCount: posts.length,
                 itemBuilder: (context, index) {
                   final post = posts[index];
@@ -131,5 +174,5 @@ class _HomeScreenState extends State<HomeScreen> {
   }
   void _signOut(BuildContext context) {
     locator<AuthService>().logout();
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginScreen()));
   }

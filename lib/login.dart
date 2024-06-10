@@ -7,8 +7,9 @@ import 'package:social_media_app/onboarding.dart';
 import 'package:social_media_app/signup.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
-
+   LoginScreen({super.key});
+  
+  final _formKey = GlobalKey<FormState>();
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
@@ -16,6 +17,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
+  bool obscureText = true;
   // final _auth = AuthService();
   @override
   Widget build(BuildContext context) {
@@ -53,6 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: TextStyle(color: Colors.grey),
               ),
               Form(
+                key: widget._formKey,
                 child: Padding(
                   padding: const EdgeInsets.all(30.0),
                   child: SingleChildScrollView(
@@ -60,7 +63,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Column(
                         children: [
                           TextFormField(
+
                             controller: _email,
+                            validator: (value) {
+                              if (value!.isEmpty) {
+                                return "Email cannot be empty";
+                              }
+                              return null;
+                            
+                            },
                             decoration: InputDecoration(
                               labelText: "Enter email",
                               labelStyle: const TextStyle(color: Colors.grey),
@@ -77,13 +88,28 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 20),
                           TextFormField(
+
                             controller: _password,
-                            obscureText: true,
+                            validator: (value) {
+                              if (value!.isEmpty) {
+                                return "Password cannot be empty";
+                              }
+                              return null;
+                            
+                            },
+                            obscureText: obscureText,
                             decoration: InputDecoration(
                               labelText: "Enter password",
                               labelStyle: const TextStyle(color: Colors.grey),
                               hintText: "Enter your password",
                               hintStyle: const TextStyle(color: Colors.grey),
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  obscureText = !obscureText;
+                                },
+                                icon: const Icon(Icons.visibility_off),
+                              ),
+
                               enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8.0),
                                   borderSide: BorderSide(
@@ -121,7 +147,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                             Radius.circular(8)))),
                               ),
                               onPressed: () {
+                                if(widget._formKey.currentState!.validate()){
+                                  _login();
+                                }
                                 _login();
+                                
                               },
                               child: const Text(
                                 "Sign in",

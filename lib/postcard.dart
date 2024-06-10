@@ -5,12 +5,14 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:path/path.dart';
 import 'package:social_media_app/authservice.dart';
 import 'package:social_media_app/commentlist.dart';
 import 'package:social_media_app/firestoreservice.dart';
 import 'package:social_media_app/locator.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:social_media_app/profile.dart';
+import 'package:social_media_app/showpost.dart';
 
 class PostCard extends StatefulWidget {
   const PostCard(
@@ -21,7 +23,8 @@ class PostCard extends StatefulWidget {
       required this.user_id,
       required this.postId,
       required this.likes_Count,
-      required this.comment_Count, required this.getData});
+      required this.comment_Count,
+      required this.getData});
   final String title;
   final String description;
   final String image;
@@ -40,28 +43,39 @@ class _PostCardState extends State<PostCard> {
   bool _isFavorite = false;
   int _favoriteCount = 0;
   int commentCount = 0;
+  int followers_count = 0;
+  int following_count = 0;
 
+  isFollowerCheck() async {
+    await locator<FirestoreService>()
+        .checkIfFollowing(widget.user_id)
+        .then((value) {
+      setState(() {
+        _isFollowing = value;
+      });
+    });
+  }
 
   getLikeCount() async {
     setState(() {
       _favoriteCount = widget.likes_Count;
     });
-  
-  
-  await locator<FirestoreService>().checkIfLiked(widget.postId).then((value) => _isFavorite = value);
-  // final List likedUsers = await locator<FirestoreService>().getLikedUsers(widget.postId);
 
-  // likedUsers.map((e) => e['email']).contains(FirebaseAuth.instance.currentUser!.email) ? _isFavorite = true : _isFavorite = false;
+    await locator<FirestoreService>()
+        .checkIfLiked(widget.postId)
+        .then((value) => _isFavorite = value);
 
-  // log((await locator<FirestoreService>().getLikedUsers(widget.postId)).toString());
-  setState(() {
-    _favoriteCount = widget.likes_Count;
+    // final List likedUsers = await locator<FirestoreService>().getLikedUsers(widget.postId);
 
-  });
-      
+    // likedUsers.map((e) => e['email']).contains(FirebaseAuth.instance.currentUser!.email) ? _isFavorite = true : _isFavorite = false;
+
+    // log((await locator<FirestoreService>().getLikedUsers(widget.postId)).toString());
+    setState(() {
+      _favoriteCount = widget.likes_Count;
+    });
   }
 
-  getCommentCount(){
+  getCommentCount() {
     setState(() {
       commentCount = widget.comment_Count;
     });
@@ -72,11 +86,14 @@ class _PostCardState extends State<PostCard> {
   @override
   void initState() {
     super.initState();
+    isFollowerCheck();
     getLikeCount();
     getCommentCount();
   }
 
+  @override
   Widget build(BuildContext context) {
+    // log(currentUserId +" " + widget.user_id);
     final size = MediaQuery.of(context).size;
     return Container(
       padding: const EdgeInsets.all(25),
@@ -126,10 +143,20 @@ class _PostCardState extends State<PostCard> {
                     future: locator<FirestoreService>().getUser(widget.user_id),
                     builder: (context, AsyncSnapshot snapshot) {
                       if (snapshot.hasData) {
-                        return Text(
-                          snapshot.data!['username'],
-                          style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
+                        return InkWell(
+                          onTap: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => ProfilePage(
+                                          userId: widget.user_id,
+                                        )));
+                          },
+                          child: Text(
+                            snapshot.data!['username'],
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
                         );
                       } else {
                         return SizedBox(
@@ -154,45 +181,58 @@ class _PostCardState extends State<PostCard> {
               )
             ]),
             const Expanded(child: SizedBox()),
-            InkWell(
-              borderRadius: const BorderRadius.all(Radius.circular(50)),
-              onTap: () async {
-                if (!_isFollowing) {
-                  setState(() {
-                    _isFollowing = true;
-                  });
-                } else {
-                  setState(() {
-                    _isFollowing = false;
-                  });
-                }
-              },
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  border: _isFollowing ? Border.all(color: Colors.grey) : null,
-                  gradient: LinearGradient(
-                    colors: !_isFollowing
-                        ? [const Color(0xFF4DD969), const Color(0xFF28CD56)]
-                        : [Colors.white, Colors.white],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: const BorderRadius.all(Radius.circular(50)),
-                ),
-                child: Text(
-                  _isFollowing ? "Following" : "Follow",
-                ),
-              ),
-            )
+            widget.user_id == FirebaseAuth.instance.currentUser!.uid
+                ? Text("")
+                : ElevatedButton(
+                    onPressed: () {
+                      if (!_isFollowing) {
+                        setState(() {
+                          _isFollowing = true;
+                          followers_count++;
+                        });
+                        locator<FirestoreService>().followUser(widget.user_id);
+                      } else {
+                        setState(() {
+                          _isFollowing = false;
+                          followers_count--;
+                        });
+                        locator<FirestoreService>()
+                            .unFollowUser(widget.user_id);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            _isFollowing ? Colors.white : Colors.green,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20))),
+                    child: Text(
+                      _isFollowing ? "Following" : "Follow",
+                      style: _isFollowing
+                          ? const TextStyle(color: Colors.black)
+                          : const TextStyle(color: Colors.white),
+                    ),
+                  )
           ]),
           const SizedBox(
             height: 20,
           ),
-          SizedBox(
-              width: 320,
-              height: 271,
-              child: Image.network(widget.image, fit: BoxFit.fill)),
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => ShowPost(
+                          postId: widget.postId,
+                          userId: widget.user_id,
+                          getData: widget.getData,
+                          commentCount: widget.comment_Count,
+                          likeCount: widget.likes_Count)));
+            },
+            child: SizedBox(
+                width: 320,
+                height: 271,
+                child: Image.network(widget.image, fit: BoxFit.cover)),
+          ),
           const SizedBox(
             height: 20,
           ),
@@ -216,29 +256,24 @@ class _PostCardState extends State<PostCard> {
               const Text("36",
                   style: TextStyle(fontSize: 16, color: Colors.black)),
               const Expanded(child: SizedBox()),
-
-
-
               IconButton(
                 onPressed: () async {
-            
-                    if (!_isFavorite) {
-                      await locator<FirestoreService>()
-                          .likePosts(widget.postId);
-                      setState(() {
-                        _favoriteCount++;
-                        _isFavorite = true;
-                        widget.getData();
-                      });
-                    } else {
-                      await locator<FirestoreService>()
-                          .dislikePosts(widget.postId);
-                      setState(() {
-                        _favoriteCount--;
-                        _isFavorite = false;
-                        widget.getData();
-                      });
-                    }
+                  if (!_isFavorite) {
+                    await locator<FirestoreService>().likePosts(widget.postId);
+                    setState(() {
+                      _favoriteCount++;
+                      _isFavorite = true;
+                      widget.getData();
+                    });
+                  } else {
+                    await locator<FirestoreService>()
+                        .dislikePosts(widget.postId);
+                    setState(() {
+                      _favoriteCount--;
+                      _isFavorite = false;
+                      widget.getData();
+                    });
+                  }
                 },
                 icon: _isFavorite
                     ? const Icon(Icons.favorite, color: Colors.red)
@@ -294,12 +329,6 @@ class _PostCardState extends State<PostCard> {
                 child: Text(_favoriteCount.toString(),
                     style: const TextStyle(fontSize: 16, color: Colors.black)),
               ),
-
-
-
-
-
-
               const SizedBox(
                 width: 10,
               ),
@@ -335,11 +364,6 @@ class _PostCardState extends State<PostCard> {
                               postId: widget.postId);
                         });
                   }),
-
-
-
-
-                  
             ],
           )
         ],

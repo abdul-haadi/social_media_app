@@ -6,9 +6,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:social_media_app/firestoreservice.dart';
+import 'package:social_media_app/locator.dart';
 
 class CreatePost extends StatefulWidget {
-  const CreatePost({super.key});
+  const CreatePost({super.key, required this.getPost,});
+  final VoidCallback getPost;
 
   @override
   State<CreatePost> createState() => _CreatePostState();
@@ -169,8 +172,9 @@ class _CreatePostState extends State<CreatePost> {
       ),
     );
   }
-  _posted(){
-    uploadPost();
+  _posted() async{
+     uploadPost().then((value) =>  widget.getPost());
     Navigator.pop(context);
+
   }
 }

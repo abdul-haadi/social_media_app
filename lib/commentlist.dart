@@ -23,7 +23,7 @@ class _CommentListState extends State<CommentList> {
   _getComment() async {
     comments = await locator<FirestoreService>().getComments(widget.postId);
     setState(() {
-      
+
     });
     print(comments.toString());
   }
@@ -56,6 +56,7 @@ class _CommentListState extends State<CommentList> {
                 await locator<FirestoreService>()
                     .addComment(widget.postId, comment.text);
                 _getComment();
+                comment.clear();
               },
               child: const Text("Comment"),
             ),
@@ -75,11 +76,38 @@ class _CommentListState extends State<CommentList> {
                   subtitle: Text(com['comment']),
                   trailing: IconButton(
                     onPressed: () async {
-                      widget.onCommentDelete();
-                      print("This is comment Id" + com.toString());
-                      await locator<FirestoreService>().deleteComment(
-                          widget.postId, com['id'].toString());
-                      _getComment();
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Delete Comment'),
+                            content: const Text('Are you sure?'),
+                            actions: <Widget>[
+                              TextButton(
+                                onPressed: () async {
+                                  widget.onCommentDelete();
+                                  await locator<FirestoreService>().deleteComment(
+                                      widget.postId, com['id'].toString());
+                                  _getComment();
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text('Yes'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text('No'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                      // widget.onCommentDelete();
+                      // print("This is comment Id" + com.toString());
+                      // await locator<FirestoreService>().deleteComment(
+                      //     widget.postId, com['id'].toString());
+                      // _getComment();
                     },
                     icon: const Icon(Icons.delete),
                   )

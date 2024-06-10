@@ -5,19 +5,26 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class FirestoreService {
   getPosts() async {
-    final snapshot = await FirebaseFirestore.instance.collection('posts').get();
+    final snapshot = await FirebaseFirestore.instance.collection('posts').orderBy("timestamp", descending: true).get();
     final data = snapshot.docs.map((e) => {...e.data(), "id": e.id}).toList();
     return data;
   }
 
-  getUserPosts(userId) async {
+  Future<List<Map<String, dynamic>>> getUserPosts(userId) async {
     final snapshot = await FirebaseFirestore.instance
         .collection('posts')
         .where('created_by', isEqualTo: userId)
         .get();
     final data = snapshot.docs.map((e) => {...e.data(), "id": e.id}).toList();
-    log(userId);
+    log("User Post data " + data.toString());
     return data;
+  }
+
+  Future<Map<String,dynamic>> getPost(postId) async {
+    final snapshot =
+        await FirebaseFirestore.instance.collection('posts').doc(postId).get();
+        log(snapshot.data().toString());
+    return snapshot.data()!;
   }
 
   getUser(String uid) async {
@@ -110,8 +117,8 @@ class FirestoreService {
         .doc(postId)
         .collection('comments')
         .get();
-    final data = await snapshot
-        .then((value) => value.docs.map((e) => {...e.data(), 'id': e.id}).toList());
+    final data = await snapshot.then(
+        (value) => value.docs.map((e) => {...e.data(), 'id': e.id}).toList());
     print("this is data" + data.toString());
 
     final List<Map<String, dynamic>> userdata = [];
@@ -120,7 +127,7 @@ class FirestoreService {
       final user = await getUser(data[i]['user_id'].toString());
       userdata.add({...user, ...data[i]});
     }
-      print(userdata);
+    print(userdata);
     return userdata;
   }
 
@@ -131,11 +138,81 @@ class FirestoreService {
     await postRef.doc(postId).update({
       "comment_count": FieldValue.increment(-1),
     });
-   await postRef
-        .doc(postId)
-        .collection('comments').doc(commentId)
-        .delete();
-        
-        print("Deleted Comment");
+    await postRef.doc(postId).collection('comments').doc(commentId).delete();
+
+    print("Deleted Comment");
   }
+
+  followUser(String userId) async {
+    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
+    CollectionReference userRef =
+        FirebaseFirestore.instance.collection('users');
+
+    await userRef.doc(currentUserId).collection('following').doc(userId).set({
+      "User_id": userId,
+      "timestamp": FieldValue.serverTimestamp(),
+    });
+
+    await userRef.doc(userId).update({
+      "followers_count": FieldValue.increment(1),
+    });
+
+    await userRef.doc(currentUserId).update({
+      "following_count": FieldValue.increment(1),
+    });
+
+    await userRef.doc(userId).collection('followers').doc(currentUserId).set({
+      "User_id": currentUserId,
+      "timestamp": FieldValue.serverTimestamp(),
+    });
+  }
+
+  unFollowUser(String userId) async {
+    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
+    CollectionReference userRef =
+        FirebaseFirestore.instance.collection('users');
+
+    await userRef
+        .doc(currentUserId)
+        .collection('following')
+        .doc(userId)
+        .delete();
+
+    await userRef
+        .doc(userId)
+        .collection('followers')
+        .doc(currentUserId)
+        .delete();
+
+    await userRef.doc(userId).update({
+      "followers_count": FieldValue.increment(-1),
+    });
+
+    await userRef.doc(currentUserId).update({
+      "following_count": FieldValue.increment(-1),
+    });
+  }
+
+  checkIfFollowing(String userId) async {
+    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUserId)
+        .collection('following')
+        .doc(userId)
+        .get();
+    return snapshot.exists;
+  }
+
+  getUserPostsCount(userId) {
+    final snapshot = FirebaseFirestore.instance
+        .collection('posts')
+        .where('created_by', isEqualTo: userId)
+        .get();
+    return snapshot.then((value) => value.docs.length);
+  }
+
 }
